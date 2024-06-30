@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const sqlite3 = require("@vscode/sqlite3").verbose();
+const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
 const port = 3000;
