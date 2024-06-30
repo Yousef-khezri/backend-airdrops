@@ -1,3 +1,5 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -5,7 +7,6 @@ const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
 const port = 3000;
-
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -38,7 +39,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
 app.get("/", (req, res) => {
 	res.sendFile(__dirname + "/index.html");
 });
-
 
 app.post("/register", (req, res) => {
 	const { userName, email, password, userGender, userMNr } = req.body;
@@ -90,7 +90,7 @@ app.post("/register", (req, res) => {
 	);
 });
 //********************** Login ******************************************************** */
-// Login endpoint												
+// Login endpoint
 app.post("/login", (req, res) => {
 	const { email, password } = req.body;
 
@@ -150,7 +150,6 @@ app.put("/update-user", (req, res) => {
 	stmt.finalize();
 });
 
-
 // ایجاد endpoint برای دریافت داده‌ها از جدول airdropSubTitle
 app.get("/api/airdropSubTitle", (req, res) => {
 	db.all("SELECT * FROM airdropSubTitle", (err, rows) => {
@@ -175,57 +174,83 @@ app.get("/api/airdropSubTitle/count", (req, res) => {
 	});
 });
 
-
 // Endpoint برای دریافت اطلاعات مربوط به hamsterCards بر اساس userID
-app.get('/hamsterCards/:userID', (req, res) => {
-    const userID = req.params.userID;
+app.get("/hamsterCards/:userID", (req, res) => {
+	const userID = req.params.userID;
 
-    db.get(`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`, [userID], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: 'خطا در دریافت اطلاعات کارت‌ها' });
-        }
+	db.get(
+		`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
+		[userID],
+		(err, row) => {
+			if (err) {
+				return res
+					.status(500)
+					.json({ error: "خطا در دریافت اطلاعات کارت‌ها" });
+			}
 
-        if (!row) {
-            return res.status(404).json({ error: 'کاربر یافت نشد یا هنوز کارتی ثبت نکرده است' });
-        }
+			if (!row) {
+				return res
+					.status(404)
+					.json({
+						error: "کاربر یافت نشد یا هنوز کارتی ثبت نکرده است",
+					});
+			}
 
-        const hamsterCards = JSON.parse(row.hamsterCards);
-        res.json(hamsterCards);
-    });
+			const hamsterCards = JSON.parse(row.hamsterCards);
+			res.json(hamsterCards);
+		}
+	);
 });
 //***************************************************************************** */
 // Update hamster cards route
-app.post('/updateHamsterCard', (req, res) => {
-    const { userId, updatedCardList } = req.body;
+app.post("/updateHamsterCard", (req, res) => {
+	const { userId, updatedCardList } = req.body;
 
-    // Check if userId and updatedCardList are provided
-    if (!userId || !updatedCardList) {
-        return res.status(400).json({ error: 'userId and updatedCardList are required' });
-    }
+	// Check if userId and updatedCardList are provided
+	if (!userId || !updatedCardList) {
+		return res
+			.status(400)
+			.json({ error: "userId and updatedCardList are required" });
+	}
 
-    // Update the hamster cards for the user in the database
-    db.run(`UPDATE hamsterCards
+	// Update the hamster cards for the user in the database
+	db.run(
+		`UPDATE hamsterCards
             SET hamsterCards = $hamsterCards
             WHERE userID = $userId`,
-        {
-            $userId: userId,
-            $hamsterCards: updatedCardList,
-        },
-        function (err) {
-            if (err) {
-                console.error('Error updating hamster cards:', err.message);
-                return res.status(500).json({ error: 'Failed to update hamster cards' });
-            }
+		{
+			$userId: userId,
+			$hamsterCards: updatedCardList,
+		},
+		function (err) {
+			if (err) {
+				console.error("Error updating hamster cards:", err.message);
+				return res
+					.status(500)
+					.json({ error: "Failed to update hamster cards" });
+			}
 
-            // Fetch updated hamster cards for the user
-            db.get(`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`, [userId], (err, row) => {
-                if (err) {
-                    console.error('Error fetching updated hamster cards:', err.message);
-                    return res.status(500).json({ error: 'Failed to fetch updated hamster cards' });
-                }
-                res.json(JSON.parse(row.hamsterCards));
-            });
-        });
+			// Fetch updated hamster cards for the user
+			db.get(
+				`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
+				[userId],
+				(err, row) => {
+					if (err) {
+						console.error(
+							"Error fetching updated hamster cards:",
+							err.message
+						);
+						return res
+							.status(500)
+							.json({
+								error: "Failed to fetch updated hamster cards",
+							});
+					}
+					res.json(JSON.parse(row.hamsterCards));
+				}
+			);
+		}
+	);
 });
 /*********************************************************************************************** */
 // ایجاد endpoint برای به‌روزرسانی جدول hamsterCards
