@@ -4,8 +4,7 @@ const cors = require("cors");
 const sqlite3 = require("@vscode/sqlite3").verbose();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
+const port = 3000;
 
 
 app.use(cors());
@@ -176,6 +175,7 @@ app.get("/api/airdropSubTitle/count", (req, res) => {
 	});
 });
 
+
 // Endpoint برای دریافت اطلاعات مربوط به hamsterCards بر اساس userID
 app.get('/hamsterCards/:userID', (req, res) => {
     const userID = req.params.userID;
@@ -261,7 +261,6 @@ app.post("/api/updateHamsterCards", async (req, res) => {
 		res.status(500).json({ message: "Error updating hamster cards" });
 	}
 });
-
 // Start server
 app.listen(port, () => {
 	console.log(`Server is running on port ${port}`);
