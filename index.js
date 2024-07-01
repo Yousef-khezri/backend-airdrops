@@ -1,10 +1,17 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+<<<<<<< HEAD
 const mysql = require("mysql2");
 
 const app = express();
 const port = process.env.PORT || 3000;
+=======
+const sqlite3 = require("sqlite3").verbose();
+
+const app = express();
+const port = 3000;
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -147,7 +154,11 @@ app.put("/update-user", (req, res) => {
 	);
 });
 
+<<<<<<< HEAD
 // Endpoint for retrieving data from 'airdropSubTitle' table
+=======
+// ایجاد endpoint برای دریافت داده‌ها از جدول airdropSubTitle
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 app.get("/api/airdropSubTitle", (req, res) => {
 	db.query("SELECT * FROM airdropSubTitle", (err, rows) => {
 		if (err) {
@@ -171,6 +182,7 @@ app.get("/api/airdropSubTitle/count", (req, res) => {
 	});
 });
 
+<<<<<<< HEAD
 // Endpoint for fetching 'hamsterCards' information based on userID
 app.get("/hamsterCards/:userID", (req, res) => {
 	const userID = req.params.userID;
@@ -179,13 +191,27 @@ app.get("/hamsterCards/:userID", (req, res) => {
 		`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
 		[userID],
 		(err, rows) => {
+=======
+// Endpoint برای دریافت اطلاعات مربوط به hamsterCards بر اساس userID
+app.get("/hamsterCards/:userID", (req, res) => {
+	const userID = req.params.userID;
+
+	db.get(
+		`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
+		[userID],
+		(err, row) => {
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 			if (err) {
 				return res
 					.status(500)
 					.json({ error: "خطا در دریافت اطلاعات کارت‌ها" });
 			}
 
+<<<<<<< HEAD
 			if (rows.length === 0) {
+=======
+			if (!row) {
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 				return res
 					.status(404)
 					.json({
@@ -193,7 +219,11 @@ app.get("/hamsterCards/:userID", (req, res) => {
 					});
 			}
 
+<<<<<<< HEAD
 			const hamsterCards = JSON.parse(rows[0].hamsterCards);
+=======
+			const hamsterCards = JSON.parse(row.hamsterCards);
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 			res.json(hamsterCards);
 		}
 	);
@@ -212,12 +242,24 @@ app.post("/updateHamsterCard", (req, res) => {
 	}
 
 	// Update the hamster cards for the user in the database
+<<<<<<< HEAD
 	db.query(
 		`UPDATE hamsterCards
         SET hamsterCards = ?
         WHERE userID = ?`,
 		[JSON.stringify(updatedCardList), userId],
 		(err) => {
+=======
+	db.run(
+		`UPDATE hamsterCards
+            SET hamsterCards = $hamsterCards
+            WHERE userID = $userId`,
+		{
+			$userId: userId,
+			$hamsterCards: updatedCardList,
+		},
+		function (err) {
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 			if (err) {
 				console.error("Error updating hamster cards:", err.message);
 				return res
@@ -226,10 +268,17 @@ app.post("/updateHamsterCard", (req, res) => {
 			}
 
 			// Fetch updated hamster cards for the user
+<<<<<<< HEAD
 			db.query(
 				`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
 				[userId],
 				(err, rows) => {
+=======
+			db.get(
+				`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
+				[userId],
+				(err, row) => {
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 					if (err) {
 						console.error(
 							"Error fetching updated hamster cards:",
@@ -241,7 +290,11 @@ app.post("/updateHamsterCard", (req, res) => {
 								error: "Failed to fetch updated hamster cards",
 							});
 					}
+<<<<<<< HEAD
 					res.json(JSON.parse(rows[0].hamsterCards));
+=======
+					res.json(JSON.parse(row.hamsterCards));
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
 				}
 			);
 		}
@@ -283,7 +336,6 @@ app.post("/api/updateHamsterCards", async (req, res) => {
 		res.status(500).json({ message: "Error updating hamster cards" });
 	}
 });
-
 // Start server
 app.listen(port, () => {
 	console.log(`Server is running on port ${port}`);

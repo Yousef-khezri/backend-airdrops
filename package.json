@@ -4,19 +4,24 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js",
-    "start": "node index.js"
+    "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@vercel/speed-insights": "^1.0.12",
     "axios": "^1.7.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+<<<<<<< HEAD
     "mysql2": "^3.10.2",
     "nodemon": "^3.1.4"
+=======
+    "nodemon": "^3.1.4",
+    "sqlite3": "^5.1.7"
+>>>>>>> 8e520aca7fc2c3fbba884f059406200c9064f8d0
   }
 }
