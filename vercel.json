@@ -9,11 +9,17 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/$1"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/index.js"
     }
-  ]
+  ],
+  "env": {
+    "MYSQL_HOST": "localhost",
+    "MYSQL_USER": "root",
+    "MYSQL_PASSWORD": "Joseph491626128090",
+    "MYSQL_DATABASE": "myDatabase"
+  }
 }
