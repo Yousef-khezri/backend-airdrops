@@ -28,9 +28,9 @@ db.connect((err) => {
 });
 
 // ************************* Register ************************************************************
-// app.get("/", (req, res) => {
-//     res.sendFile(__dirname + "/index.html");
-// });
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
+});
 
 app.post("/register", (req, res) => {
     const { userName, email, password, userGender, userMNr } = req.body;
