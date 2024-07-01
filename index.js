@@ -1,62 +1,54 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const sqlite3 = require("@vscode/sqlite3").verbose();
+const mysql = require("mysql2");
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Enable CORS for specific origins and methods
-app.use(
-	cors({
-		origin: ["http://localhost:4000", "http://localhost:3001"],
-		methods: ["GET", "POST", "PUT"],
-		allowedHeaders: ["Content-Type"],
-	})
-);
+// MySQL database setup
+const db = mysql.createConnection({
+	host: "localhost",
+	user: "root",
+	password: "Joseph491626128090",
+	database: "myDatabase",
+	insecureAuth: true,
+});
 
-// Body parser middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// SQLite database setup
-const dbPath = "./database.db"; // Path to your SQLite database file
-const db = new sqlite3.Database(dbPath, (err) => {
+db.connect((err) => {
 	if (err) {
 		console.error("Database connection error:", err.message);
 	} else {
-		console.log("Connected to the SQLite database.");
+		console.log("Connected to the MySQL database.");
 	}
 });
+
 
 // ************************* Register ************************************************************
 app.get("/", (req, res) => {
 	res.sendFile(__dirname + "/index.html");
 });
 
-
 app.post("/register", (req, res) => {
 	const { userName, email, password, userGender, userMNr } = req.body;
 
-	// ذخیره اطلاعات کاربر در جدول users
-	db.run(
+	// Save user data in the 'users' table
+	db.query(
 		`INSERT INTO users (userName, email, password, userGender, userMNr) VALUES (?, ?, ?, ?, ?)`,
 		[userName, email, password, userGender, userMNr],
-		function (err) {
+		(err, result) => {
 			if (err) {
 				return res.status(500).json({ error: "خطا در ثبت نام" });
 			}
 
-			const userId = this.lastID;
+			const userId = result.insertId;
 
-			// دریافت داده‌ها از جدول airdropSubTitle و تبدیل به آبجکت
-			db.all("SELECT * FROM airdropSubTitle", [], (err, rows) => {
+			// Retrieve data from 'airdropSubTitle' table and convert to object
+			db.query("SELECT * FROM airdropSubTitle", (err, rows) => {
 				if (err) {
 					return res
 						.status(500)
@@ -72,11 +64,11 @@ app.post("/register", (req, res) => {
 					cardImg: row.cardImg,
 				}));
 
-				// ذخیره آبجکت در جدول hamsterCards
-				db.run(
+				// Save object in 'hamsterCards' table
+				db.query(
 					`INSERT INTO hamsterCards (userID, hamsterCards) VALUES (?, ?)`,
 					[userId, JSON.stringify(airdropCards)],
-					function (err) {
+					(err) => {
 						if (err) {
 							return res
 								.status(500)
@@ -90,26 +82,27 @@ app.post("/register", (req, res) => {
 		}
 	);
 });
+
 //********************** Login ******************************************************** */
-// Login endpoint												
+// Login endpoint
 app.post("/login", (req, res) => {
 	const { email, password } = req.body;
 
 	// Check if user exists in database
-	db.get(
+	db.query(
 		`
-      SELECT * FROM users
-      WHERE email = ? AND password = ?
-      `,
+        SELECT * FROM users
+        WHERE email = ? AND password = ?
+        `,
 		[email, password],
-		(err, row) => {
+		(err, rows) => {
 			if (err) {
 				console.error(err.message);
 				res.status(500).json({ error: "Error querying database" });
-			} else if (row) {
+			} else if (rows.length > 0) {
 				res.status(200).json({
 					message: "Login successful",
-					user: row,
+					user: rows[0],
 				});
 			} else {
 				res.status(404).json({ error: "User not found" });
@@ -120,7 +113,7 @@ app.post("/login", (req, res) => {
 //************************************************************************************** */
 // Airdrops endpoint to fetch all records from 'airdrops' table
 app.get("/airdrops", (req, res) => {
-	db.all("SELECT * FROM airdrops", (err, rows) => {
+	db.query("SELECT * FROM airdrops", (err, rows) => {
 		if (err) {
 			console.error(err.message);
 			res.status(500).json({ error: "Error querying airdrops" });
@@ -134,27 +127,29 @@ app.get("/airdrops", (req, res) => {
 app.put("/update-user", (req, res) => {
 	const { userID, gender, phone } = req.body;
 
-	const stmt = db.prepare(`
-      UPDATE users
-      SET userGender = ?, userMNr = ?
-      WHERE userID = ?
-  `);
-
-	stmt.run(gender, phone, userID, function (err) {
-		if (err) {
-			console.error(err.message);
-			res.status(500).json({ error: "Error updating user in database" });
-		} else {
-			res.status(200).json({ message: "User updated successfully" });
+	db.query(
+		`
+        UPDATE users
+        SET userGender = ?, userMNr = ?
+        WHERE userID = ?
+    `,
+		[gender, phone, userID],
+		(err, result) => {
+			if (err) {
+				console.error(err.message);
+				res.status(500).json({
+					error: "Error updating user in database",
+				});
+			} else {
+				res.status(200).json({ message: "User updated successfully" });
+			}
 		}
-	});
-	stmt.finalize();
+	);
 });
 
-
-// ایجاد endpoint برای دریافت داده‌ها از جدول airdropSubTitle
+// Endpoint for retrieving data from 'airdropSubTitle' table
 app.get("/api/airdropSubTitle", (req, res) => {
-	db.all("SELECT * FROM airdropSubTitle", (err, rows) => {
+	db.query("SELECT * FROM airdropSubTitle", (err, rows) => {
 		if (err) {
 			console.error(err.message);
 			res.status(500).json({ error: "Error querying airdropSubTitle" });
@@ -164,71 +159,97 @@ app.get("/api/airdropSubTitle", (req, res) => {
 	});
 });
 
-// endpoint برای دریافت تعداد سطرهای جدول airdropSubTitle
+// Endpoint for getting row count of 'airdropSubTitle' table
 app.get("/api/airdropSubTitle/count", (req, res) => {
-	db.get("SELECT COUNT(*) AS count FROM airdropSubTitle", (err, row) => {
+	db.query("SELECT COUNT(*) AS count FROM airdropSubTitle", (err, rows) => {
 		if (err) {
 			console.error(err.message);
 			res.status(500).json({ error: "Error querying airdropSubTitle" });
 		} else {
-			res.status(200).json({ count: row.count });
+			res.status(200).json({ count: rows[0].count });
 		}
 	});
 });
 
-// Endpoint برای دریافت اطلاعات مربوط به hamsterCards بر اساس userID
-app.get('/hamsterCards/:userID', (req, res) => {
-    const userID = req.params.userID;
+// Endpoint for fetching 'hamsterCards' information based on userID
+app.get("/hamsterCards/:userID", (req, res) => {
+	const userID = req.params.userID;
 
-    db.get(`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`, [userID], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: 'خطا در دریافت اطلاعات کارت‌ها' });
-        }
+	db.query(
+		`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
+		[userID],
+		(err, rows) => {
+			if (err) {
+				return res
+					.status(500)
+					.json({ error: "خطا در دریافت اطلاعات کارت‌ها" });
+			}
 
-        if (!row) {
-            return res.status(404).json({ error: 'کاربر یافت نشد یا هنوز کارتی ثبت نکرده است' });
-        }
+			if (rows.length === 0) {
+				return res
+					.status(404)
+					.json({
+						error: "کاربر یافت نشد یا هنوز کارتی ثبت نکرده است",
+					});
+			}
 
-        const hamsterCards = JSON.parse(row.hamsterCards);
-        res.json(hamsterCards);
-    });
+			const hamsterCards = JSON.parse(rows[0].hamsterCards);
+			res.json(hamsterCards);
+		}
+	);
 });
+
 //***************************************************************************** */
 // Update hamster cards route
-app.post('/updateHamsterCard', (req, res) => {
-    const { userId, updatedCardList } = req.body;
+app.post("/updateHamsterCard", (req, res) => {
+	const { userId, updatedCardList } = req.body;
 
-    // Check if userId and updatedCardList are provided
-    if (!userId || !updatedCardList) {
-        return res.status(400).json({ error: 'userId and updatedCardList are required' });
-    }
+	// Check if userId and updatedCardList are provided
+	if (!userId || !updatedCardList) {
+		return res
+			.status(400)
+			.json({ error: "userId and updatedCardList are required" });
+	}
 
-    // Update the hamster cards for the user in the database
-    db.run(`UPDATE hamsterCards
-            SET hamsterCards = $hamsterCards
-            WHERE userID = $userId`,
-        {
-            $userId: userId,
-            $hamsterCards: updatedCardList,
-        },
-        function (err) {
-            if (err) {
-                console.error('Error updating hamster cards:', err.message);
-                return res.status(500).json({ error: 'Failed to update hamster cards' });
-            }
+	// Update the hamster cards for the user in the database
+	db.query(
+		`UPDATE hamsterCards
+        SET hamsterCards = ?
+        WHERE userID = ?`,
+		[JSON.stringify(updatedCardList), userId],
+		(err) => {
+			if (err) {
+				console.error("Error updating hamster cards:", err.message);
+				return res
+					.status(500)
+					.json({ error: "Failed to update hamster cards" });
+			}
 
-            // Fetch updated hamster cards for the user
-            db.get(`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`, [userId], (err, row) => {
-                if (err) {
-                    console.error('Error fetching updated hamster cards:', err.message);
-                    return res.status(500).json({ error: 'Failed to fetch updated hamster cards' });
-                }
-                res.json(JSON.parse(row.hamsterCards));
-            });
-        });
+			// Fetch updated hamster cards for the user
+			db.query(
+				`SELECT hamsterCards FROM hamsterCards WHERE userID = ?`,
+				[userId],
+				(err, rows) => {
+					if (err) {
+						console.error(
+							"Error fetching updated hamster cards:",
+							err.message
+						);
+						return res
+							.status(500)
+							.json({
+								error: "Failed to fetch updated hamster cards",
+							});
+					}
+					res.json(JSON.parse(rows[0].hamsterCards));
+				}
+			);
+		}
+	);
 });
+
 /*********************************************************************************************** */
-// ایجاد endpoint برای به‌روزرسانی جدول hamsterCards
+// Endpoint for updating 'hamsterCards' table
 app.post("/api/updateHamsterCards", async (req, res) => {
 	const { userID, hamsterCards } = req.body;
 
@@ -240,11 +261,12 @@ app.post("/api/updateHamsterCards", async (req, res) => {
 		});
 
 		const query = `
-      INSERT OR REPLACE INTO hamsterCards (userID, airdropSTId, hamsterCards)
-      VALUES ${placeholders}
-    `;
+            INSERT INTO hamsterCards (userID, airdropSTId, hamsterCards)
+            VALUES ${placeholders}
+            ON DUPLICATE KEY UPDATE hamsterCards = VALUES(hamsterCards)
+        `;
 
-		db.run(query, values, function (err) {
+		db.query(query, values, (err) => {
 			if (err) {
 				console.error(err);
 				return res
