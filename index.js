@@ -18,7 +18,7 @@ db.connect((err) => {
 		console.error("Database connection error: " + err.stack);
 		return;
 	}
-	console.log("Connected as id " + connection.threadId);
+	console.log("Connected as id " + db.threadId);
 });
 
 const app = express();
