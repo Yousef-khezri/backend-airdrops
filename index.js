@@ -1,25 +1,35 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const mysql = require("mysql2");
+// const mysql = require("mysql2");
+const { Pool } = require("pg");
 
 // MySQL database setup
 require("dotenv").config();
 
-const db = mysql.createConnection({
-	host: process.env.DB_HOST,
-	user: process.env.DB_USERNAME,
-	password: process.env.DB_PASSWORD,
-	database: process.env.DB_NAME,
+// تنظیمات اتصال به پایگاه‌داده PostgreSQL با استفاده از Environment Variables
+const pool = new Pool({
+    user: process.env.postgresDatabase_USER,
+    host: process.env.postgresDatabase_HOST,
+    database: process.env.postgresDatabase_DATABASE,
+    password: process.env.postgresDatabase_PASSWORD,
+    port: process.env.postgresDatabase_PORT || 5432, // پیش‌فرض پورت 5432 است
 });
 
-db.connect((err) => {
-	if (err) {
-		console.error("Database connection error: " + err.stack);
-		return;
-	}
-	console.log("Connected as id " + db.threadId);
-});
+// const db = mysql.createConnection({
+// 	host: process.env.DB_HOST,
+// 	user: process.env.DB_USERNAME,
+// 	password: process.env.DB_PASSWORD,
+// 	database: process.env.DB_NAME,
+// });
+
+// db.connect((err) => {
+// 	if (err) {
+// 		console.error("Database connection error: " + err.stack);
+// 		return;
+// 	}
+// 	console.log("Connected as id " + db.threadId);
+// });
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -154,15 +164,30 @@ app.get("/api/airdropSubTitle", (req, res) => {
 });
 
 // Endpoint for getting row count of 'airdropSubTitle' table
+// app.get("/api/airdropSubTitle/count", (req, res) => {
+//     db.query("SELECT COUNT(*) AS count FROM airdropSubTitle", (err, rows) => {
+//         if (err) {
+//             console.error(err.message);
+//             res.status(500).json({ error: "Error querying airdropSubTitle" });
+//         } else {
+//             res.status(200).json({ count: rows[0].count });
+//         }
+//     });
+// });
 app.get("/api/airdropSubTitle/count", (req, res) => {
-    db.query("SELECT COUNT(*) AS count FROM airdropSubTitle", (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            res.status(500).json({ error: "Error querying airdropSubTitle" });
-        } else {
-            res.status(200).json({ count: rows[0].count });
-        }
-    });
+	pool.query(
+		"SELECT COUNT(*) AS count FROM airdropSubTitle",
+		(err, result) => {
+			if (err) {
+				console.error(err.message);
+				res.status(500).json({
+					error: "Error querying airdropSubTitle",
+				});
+			} else {
+				res.status(200).json({ count: result.rows[0].count });
+			}
+		}
+	);
 });
 
 // Endpoint for fetching 'hamsterCards' information based on userID
