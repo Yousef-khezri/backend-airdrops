@@ -119,15 +119,25 @@ app.post("/login", (req, res) => {
 //************************************************************************************** */
 // Airdrops endpoint to fetch all records from 'airdrops' table
 app.get("/airdrops", (req, res) => {
-    db.query("SELECT * FROM airdrops", (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            res.status(500).json({ error: "Error querying airdrops" });
-        } else {
-            res.status(200).json(rows);
-        }
-    });
+	pool.query("SELECT * FROM airdrops", (err, result) => {
+		if (err) {
+			console.error(err.message);
+			res.status(500).json({ error: "Error querying airdrops" });
+		} else {
+			res.status(200).json(result.rows);
+		}
+	});
 });
+// app.get("/airdrops", (req, res) => {
+//     db.query("SELECT * FROM airdrops", (err, rows) => {
+//         if (err) {
+//             console.error(err.message);
+//             res.status(500).json({ error: "Error querying airdrops" });
+//         } else {
+//             res.status(200).json(rows);
+//         }
+//     });
+// });
 
 // Update user endpoint
 app.put("/update-user", (req, res) => {
